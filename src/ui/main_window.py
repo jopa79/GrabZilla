@@ -6,14 +6,16 @@ import wx
 import os
 import logging
 import threading
+import subprocess
 import shutil
+import re
 from typing import List, Dict, Optional
 
 from src.config.settings import (
     BANNER_IMG, ICON_IMG, DELETE_ICON, THUMBNAIL_DIR,
     QUALITY_CHOICES, PLAYLIST_CHOICES
 )
-from src.core.video import VideoInfo, is_valid_link, is_playlist, extract_video_id, download_thumbnail
+from src.core.video import VideoInfo, is_valid_link, is_playlist, extract_video_id, download_thumbnail, format_duration
 from src.core.downloader import (
     check_ytdlp_exists, get_ytdlp_version, get_latest_ytdlp_version, 
     update_ytdlp, fetch_video_metadata, fetch_playlist_videos,
@@ -166,19 +168,11 @@ class VideoDownloaderFrame(wx.Frame):
             # Create a simple delete icon
             if os.path.exists(DELETE_ICON):
                 self.delete_icon = wx.Bitmap(DELETE_ICON)
+                logger.info(f"Loading delete icon from {DELETE_ICON}")
             else:
                 delete_bitmap = wx.Bitmap(16, 16)
                 self.delete_icon = delete_bitmap
             self.delete_icon_idx = self.image_list.Add(self.delete_icon)
-            
-            # Simple up/down icons
-            up_bitmap = wx.Bitmap(16, 16)
-            self.move_up_icon = up_bitmap
-            self.move_up_idx = self.image_list.Add(up_bitmap)
-            
-            down_bitmap = wx.Bitmap(16, 16)
-            self.move_down_icon = down_bitmap
-            self.move_down_idx = self.image_list.Add(down_bitmap)
         except Exception as e:
             logger.error(f"Error initializing image list: {e}")
             # Try to continue without images
@@ -196,23 +190,8 @@ class VideoDownloaderFrame(wx.Frame):
         self.list_view.InsertColumn(1, 'Title', width=250)
         self.list_view.InsertColumn(2, 'Duration', width=70)
         self.list_view.InsertColumn(3, 'Status', width=130)
-        self.list_view.InsertColumn(4, '', width=30)  # Delete icon
-        self.list_view.InsertColumn(5, '', width=30)  # Move up icon
-        self.list_view.InsertColumn(6, '', width=30)  # Move down icon
+        # self.list_view.InsertColumn(4, '', width=30)  # Delete icon
         vbox.Add(self.list_view, 1, wx.EXPAND | wx.ALL, 10)
-        
-        # Queue management buttons
-        hbox_queue = wx.BoxSizer(wx.HORIZONTAL)
-        
-        self.move_up_button = wx.Button(panel, label='Move Up')
-        self.move_up_button.Bind(wx.EVT_BUTTON, self.on_move_up)
-        hbox_queue.Add(self.move_up_button, 0, wx.RIGHT, 5)
-        
-        self.move_down_button = wx.Button(panel, label='Move Down')
-        self.move_down_button.Bind(wx.EVT_BUTTON, self.on_move_down)
-        hbox_queue.Add(self.move_down_button, 0, wx.RIGHT, 5)
-        
-        vbox.Add(hbox_queue, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
         
         # Bind list item events
         self.list_view.Bind(wx.EVT_LEFT_DOWN, self.on_list_click)
@@ -330,8 +309,6 @@ class VideoDownloaderFrame(wx.Frame):
                     default_bitmap = wx.Bitmap(90, 50)
                     self.default_thumbnail_idx = self.image_list.Add(default_bitmap)
                     self.delete_icon_idx = self.image_list.Add(self.delete_icon)
-                    self.move_up_idx = self.image_list.Add(self.move_up_icon)
-                    self.move_down_idx = self.image_list.Add(self.move_down_icon)
                 self.SetStatusText("Download queue cleared")
             dialog.Destroy()
 
@@ -348,16 +325,10 @@ class VideoDownloaderFrame(wx.Frame):
             
             x_pos = point.x
             
-            # Check which action column was clicked
+            # Check if delete column was clicked
             if total_width <= x_pos < total_width + col_widths[4]:
                 # Delete icon clicked
                 self._remove_selected_item(item)
-            elif total_width + col_widths[4] <= x_pos < total_width + col_widths[4] + col_widths[5]:
-                # Move up icon clicked
-                self.on_move_up(item=item)
-            elif total_width + col_widths[4] + col_widths[5] <= x_pos:
-                # Move down icon clicked
-                self.on_move_down(item=item)
         
         event.Skip()  # Allow default processing
 
@@ -372,64 +343,15 @@ class VideoDownloaderFrame(wx.Frame):
             
             # Add menu items
             remove_item = menu.Append(-1, "Remove from Queue")
-            move_up_item = menu.Append(-1, "Move Up")
-            move_down_item = menu.Append(-1, "Move Down")
             
             # Bind events
             self.Bind(wx.EVT_MENU, lambda evt: self._remove_selected_item(item), remove_item)
-            self.Bind(wx.EVT_MENU, lambda evt: self.on_move_up(item=item), move_up_item)
-            self.Bind(wx.EVT_MENU, lambda evt: self.on_move_down(item=item), move_down_item)
             
             # Show popup menu
             self.PopupMenu(menu, event.GetPosition())
             menu.Destroy()
         
         event.Skip()
-
-    def on_move_up(self, event=None, item=None):
-        """Move selected item up in the queue"""
-        if item is None:
-            item = self.list_view.GetFirstSelected()
-            
-        if item > 0:
-            # Swap items in video list
-            self.videos[item], self.videos[item-1] = self.videos[item-1], self.videos[item]
-            
-            # Get all data from both rows
-            data = []
-            for row in [item-1, item]:
-                row_data = {
-                    'title': self.list_view.GetItemText(row, 1),
-                    'duration': self.list_view.GetItemText(row, 2),
-                    'status': self.list_view.GetItemText(row, 3),
-                    'bgcolor': self.list_view.GetItemBackgroundColour(row)
-                }
-                data.append(row_data)
-            
-            # Swap data between rows
-            for col in range(1, 4):  # Title, Duration, Status
-                self.list_view.SetItem(item-1, col, data[1]['title'] if col == 1 else 
-                                                data[1]['duration'] if col == 2 else 
-                                                data[1]['status'])
-                self.list_view.SetItem(item, col, data[0]['title'] if col == 1 else 
-                                            data[0]['duration'] if col == 2 else 
-                                            data[0]['status'])
-            
-            # Set the images for action columns (they remain the same)
-            self.list_view.SetItem(item-1, 4, "", imageId=self.delete_icon_idx)
-            self.list_view.SetItem(item-1, 5, "", imageId=self.move_up_idx)
-            self.list_view.SetItem(item-1, 6, "", imageId=self.move_down_idx)
-            
-            self.list_view.SetItem(item, 4, "", imageId=self.delete_icon_idx)
-            self.list_view.SetItem(item, 5, "", imageId=self.move_up_idx)
-            self.list_view.SetItem(item, 6, "", imageId=self.move_down_idx)
-            
-            # Swap colors
-            self.list_view.SetItemBackgroundColour(item-1, data[1]['bgcolor'])
-            self.list_view.SetItemBackgroundColour(item, data[0]['bgcolor'])
-            
-            # Select the moved item
-            self.list_view.Select(item-1)
 
     def on_update_ytdlp(self, event):
         """Download or update yt-dlp executable"""
@@ -543,10 +465,9 @@ class VideoDownloaderFrame(wx.Frame):
         index = self.list_view.InsertItem(self.list_view.GetItemCount(), "", self.default_thumbnail_idx)
         self.list_view.SetItem(index, 1, "Fetching metadata...")
         
-        # Set action icons
-        self.list_view.SetItem(index, 4, "", imageId=self.delete_icon_idx)
-        self.list_view.SetItem(index, 5, "", imageId=self.move_up_idx)
-        self.list_view.SetItem(index, 6, "", imageId=self.move_down_idx)
+        # Only set the delete icon if we have a valid index and the image_list was created successfully
+        if index != -1 and hasattr(self, 'image_list') and hasattr(self, 'delete_icon_idx'):
+            self.list_view.SetItem(index, 4, "", imageId=self.delete_icon_idx)
         
         threading.Thread(target=self._fetch_metadata, args=(index, video_info.url), daemon=True).start()
 
@@ -583,6 +504,7 @@ class VideoDownloaderFrame(wx.Frame):
             self.list_view.DeleteItem(index)
             self.SetStatusText(f"Removed item at position {index+1}")
 
+
     def _update_thumbnail(self, index: int, thumbnail_path: str):
         """Update the thumbnail image in the list view"""
         try:
@@ -594,10 +516,9 @@ class VideoDownloaderFrame(wx.Frame):
             # Update the list item with the new image
             self.list_view.SetItemImage(index, img_idx)
             
-            # Make sure action icons are preserved
-            self.list_view.SetItem(index, 4, "", imageId=self.delete_icon_idx)
-            self.list_view.SetItem(index, 5, "", imageId=self.move_up_idx)
-            self.list_view.SetItem(index, 6, "", imageId=self.move_down_idx)
+            # Make sure delete icon is preserved - only if we have a valid index and delete_icon_idx exists
+            if index != -1 and hasattr(self, 'delete_icon_idx'):
+                self.list_view.SetItem(index, 4, "", imageId=self.delete_icon_idx)
         except Exception as e:
             logger.error(f"Error updating thumbnail: {e}")
 
@@ -656,7 +577,7 @@ class VideoDownloaderFrame(wx.Frame):
                 
             title = info_dict.get('title', 'Unknown')
             duration = info_dict.get('duration', 0)
-            duration_str = from src.core.video import format_duration(duration)
+            duration_str = format_duration(duration)
             
             # Get thumbnail URL
             thumbnail_url = info_dict.get('thumbnail')
@@ -717,7 +638,7 @@ class VideoDownloaderFrame(wx.Frame):
             extension = ".mp3" if self.audio_only.GetValue() else ".mp4"
             output_path = os.path.join(self.save_path, f"{video_title}{extension}")
             
-            # Check if file already exists
+                # Check if file already exists
             if os.path.exists(output_path):
                 wx.CallAfter(self.list_view.SetItem, index, 3, "Already Downloaded")
                 wx.CallAfter(self._set_row_color, index, wx.Colour(200, 255, 200))  # Light green
@@ -807,30 +728,3 @@ class VideoDownloaderFrame(wx.Frame):
             message += f", {failed_count} failed"
         
         wx.MessageBox(message, "Downloads Complete", wx.ICON_INFORMATION)
-                }
-                data.append(row_data)
-            
-            # Swap data between rows
-            for col in range(1, 4):  # Title, Duration, Status
-                self.list_view.SetItem(item, col, data[1]['title'] if col == 1 else 
-                                             data[1]['duration'] if col == 2 else 
-                                             data[1]['status'])
-                self.list_view.SetItem(item+1, col, data[0]['title'] if col == 1 else 
-                                               data[0]['duration'] if col == 2 else 
-                                               data[0]['status'])
-            
-            # Set the images for action columns (they remain the same)
-            self.list_view.SetItem(item, 4, "", imageId=self.delete_icon_idx)
-            self.list_view.SetItem(item, 5, "", imageId=self.move_up_idx)
-            self.list_view.SetItem(item, 6, "", imageId=self.move_down_idx)
-            
-            self.list_view.SetItem(item+1, 4, "", imageId=self.delete_icon_idx)
-            self.list_view.SetItem(item+1, 5, "", imageId=self.move_up_idx)
-            self.list_view.SetItem(item+1, 6, "", imageId=self.move_down_idx)
-            
-            # Swap colors
-            self.list_view.SetItemBackgroundColour(item, data[1]['bgcolor'])
-            self.list_view.SetItemBackgroundColour(item+1, data[0]['bgcolor'])
-            
-            # Select the moved item
-            self.list_view.Select(item+1)
