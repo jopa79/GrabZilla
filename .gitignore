@@ -1,0 +1,5 @@
+# Python Site-Packages ausschließen
+**/site-packages/
+# Virtuelle Umgebung ausschließen
+venv/
+env/

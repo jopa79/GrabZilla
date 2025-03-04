@@ -1,2 +1,0 @@
-# GrabZilla
- Video Downloader
