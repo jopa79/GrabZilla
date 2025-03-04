@@ -3,3 +3,4 @@
 # Virtuelle Umgebung ausschließen
 venv/
 env/
+**/__pycache__/
