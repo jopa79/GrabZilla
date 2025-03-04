@@ -1,2 +1,21 @@
 2025-03-05 00:50:27,210 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
 2025-03-05 00:50:29,103 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 00:52:53,343 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 00:52:55,268 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 00:53:45,089 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 00:53:47,046 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 00:54:49,164 - VideoDownloader.UI - ERROR - Failed to process playlist: Der Befehl "list" ist entweder falsch geschrieben oder
+konnte nicht gefunden werden.
+2025-03-05 00:56:19,616 - VideoDownloader.UI - ERROR - Failed to process playlist: WARNING: [youtube:tab] YouTube said: INFO - 1 unavailable video is hidden
+WARNING: [youtube:tab] Incomplete data received. Retrying (1/3)...
+WARNING: [youtube:tab] Incomplete data received. Retrying (2/3)...
+WARNING: [youtube:tab] Incomplete data received. Retrying (3/3)...
+WARNING: [youtube:tab] Incomplete data received. Giving up after 3 retries
+Der Befehl "si" ist entweder falsch geschrieben oder
+konnte nicht gefunden werden.
+2025-03-05 00:57:05,283 - VideoDownloader.UI - ERROR - Failed to process playlist: WARNING: [youtube:tab] Incomplete data received. Retrying (1/3)...
+WARNING: [youtube:tab] Incomplete data received. Retrying (2/3)...
+WARNING: [youtube:tab] Incomplete data received. Retrying (3/3)...
+WARNING: [youtube:tab] Incomplete data received. Giving up after 3 retries
+Der Befehl "si" ist entweder falsch geschrieben oder
+konnte nicht gefunden werden.
