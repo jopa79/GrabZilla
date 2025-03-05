@@ -13,9 +13,9 @@ from typing import List, Dict, Optional
 
 from src.config.settings import (
     BANNER_IMG, ICON_IMG, DELETE_ICON, THUMBNAIL_DIR,
-    QUALITY_CHOICES, PLAYLIST_CHOICES
+    QUALITY_CHOICES
 )
-from src.core.video import VideoInfo, is_valid_link, is_playlist, extract_video_id, download_thumbnail, format_duration
+from src.core.video import VideoInfo, is_valid_link, extract_video_id, download_thumbnail, format_duration
 from src.core.downloader import (
     check_ytdlp_exists, get_ytdlp_version, get_latest_ytdlp_version, 
     update_ytdlp, fetch_video_metadata, fetch_playlist_videos,
@@ -38,11 +38,10 @@ class VideoDownloaderFrame(wx.Frame):
         self.videos: List[VideoInfo] = []
         self.downloading: bool = False
         self.download_threads: List[threading.Thread] = []
-
-        if os.name == 'nt':  # Windows
-            self.default_folder = os.path.join(os.environ['USERPROFILE'], 'Desktop')
-        else:  # macOS/Linux
-            self.default_folder = os.path.join(os.environ['HOME'], 'Desktop')
+        self.metadata_threads: List[threading.Thread] = []  # Track metadata threads
+        self.cancel_requested: bool = False  # Track cancellation state
+        # Set default folder to Desktop on Windows
+        self.default_folder = os.path.join(os.environ['USERPROFILE'], 'Desktop')
                 
         self.save_path = os.path.join(self.default_folder, 'VideoDownloader')
         os.makedirs(self.save_path, exist_ok=True)
@@ -147,16 +146,9 @@ class VideoDownloaderFrame(wx.Frame):
         self.quality_dropdown.SetSelection(0)  # Default to Best
         options_sizer.Add(self.quality_dropdown, 0, wx.ALL, 5)
         
-        # Add playlist options
-        playlist_label = wx.StaticText(options_box, label="Playlist:")
-        options_sizer.Add(playlist_label, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
-        
-        self.playlist_dropdown = wx.Choice(options_box, choices=PLAYLIST_CHOICES)
-        self.playlist_dropdown.SetSelection(0)  # Default to Download All
-        options_sizer.Add(self.playlist_dropdown, 0, wx.ALL, 5)
+
         
         vbox.Add(options_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-        
         # Create image list for thumbnails with sufficient error handling
         try:
             self.image_list = wx.ImageList(90, 50)
@@ -165,14 +157,19 @@ class VideoDownloaderFrame(wx.Frame):
             default_bitmap = wx.Bitmap(90, 50)
             self.default_thumbnail_idx = self.image_list.Add(default_bitmap)
             
-            # Create a simple delete icon
-            if os.path.exists(DELETE_ICON):
-                self.delete_icon = wx.Bitmap(DELETE_ICON)
-                logger.info(f"Loading delete icon from {DELETE_ICON}")
-            else:
-                delete_bitmap = wx.Bitmap(16, 16)
-                self.delete_icon = delete_bitmap
-            self.delete_icon_idx = self.image_list.Add(self.delete_icon)
+            # Load and add delete icon
+            try:
+                if os.path.exists(DELETE_ICON):
+                    logger.info(f"Loading delete icon from {DELETE_ICON}")
+                    delete_icon = wx.Bitmap(DELETE_ICON)
+                    self.delete_icon = delete_icon
+                    self.delete_icon_idx = self.image_list.Add(delete_icon)
+            except Exception as e:
+                logger.error(f"Error loading delete icon: {e}")
+                # Create a default delete icon if loading fails
+                default_delete = wx.Bitmap(90, 50)
+                self.delete_icon = default_delete
+                self.delete_icon_idx = self.image_list.Add(default_delete)
         except Exception as e:
             logger.error(f"Error initializing image list: {e}")
             # Try to continue without images
@@ -180,22 +177,21 @@ class VideoDownloaderFrame(wx.Frame):
                          "Warning", wx.ICON_WARNING)
             
         # Video list view
-        self.list_view = wx.ListCtrl(panel, style=wx.LC_REPORT | wx.LC_SINGLE_SEL)
+        self.list_view = wx.ListCtrl(panel, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER)
         
         # Set the image list if it was created successfully
         if hasattr(self, 'image_list'):
             self.list_view.SetImageList(self.image_list, wx.IMAGE_LIST_SMALL)
             
-        self.list_view.InsertColumn(0, 'Thumbnail', width=100)
-        self.list_view.InsertColumn(1, 'Title', width=250)
-        self.list_view.InsertColumn(2, 'Duration', width=70)
-        self.list_view.InsertColumn(3, 'Status', width=130)
-        # self.list_view.InsertColumn(4, '', width=30)  # Delete icon
+        # Set columns with better widths to fit the table
+        self.list_view.InsertColumn(0, 'Thumbnail', width=120)
+        self.list_view.InsertColumn(1, 'Title', width=300)
+        self.list_view.InsertColumn(2, 'Duration', width=80)
+        self.list_view.InsertColumn(3, 'Status', width=150)
         vbox.Add(self.list_view, 1, wx.EXPAND | wx.ALL, 10)
         
         # Bind list item events
         self.list_view.Bind(wx.EVT_LEFT_DOWN, self.on_list_click)
-        self.list_view.Bind(wx.EVT_RIGHT_DOWN, self.on_right_click)
 
         # Download and clear list buttons
         hbox_buttons = wx.BoxSizer(wx.HORIZONTAL)
@@ -206,7 +202,13 @@ class VideoDownloaderFrame(wx.Frame):
         # Update YT-DLP button
         self.update_button = wx.Button(panel, label='Update yt-dlp')
         self.update_button.Bind(wx.EVT_BUTTON, self.on_update_ytdlp)
-        hbox_buttons.Add(self.update_button, 0, wx.EXPAND)
+        hbox_buttons.Add(self.update_button, 0, wx.EXPAND | wx.RIGHT, 10)
+        
+        # Add cancel button
+        self.cancel_button = wx.Button(panel, label='Cancel Downloads')
+        self.cancel_button.Bind(wx.EVT_BUTTON, self.on_cancel_downloads)
+        self.cancel_button.Disable()  # Disabled by default
+        hbox_buttons.Add(self.cancel_button, 0, wx.EXPAND)
 
         hbox_buttons.AddStretchSpacer(1)
 
@@ -232,15 +234,10 @@ class VideoDownloaderFrame(wx.Frame):
             link = link.strip()
             if link and not self._is_url_in_queue(link):
                 if is_valid_link(link):
-                    # Process possible playlist
-                    if is_playlist(link) and self.playlist_dropdown.GetSelection() == 0:
-                        threading.Thread(target=self._process_playlist, args=(link,), daemon=True).start()
-                        added_count += 1
-                    else:
-                        # Add single video
-                        video_info = VideoInfo(url=link)
-                        self._add_video_to_list(video_info)
-                        added_count += 1
+                    # Add single video
+                    video_info = VideoInfo(url=link)
+                    self._add_video_to_list(video_info)
+                    added_count += 1
                 else:
                     wx.MessageBox(f"Invalid video link: {link}", "Error", wx.ICON_ERROR)
         
@@ -297,23 +294,34 @@ class VideoDownloaderFrame(wx.Frame):
             return
             
         if self.list_view.GetItemCount() > 0:
-            dialog = wx.MessageDialog(self, "Are you sure you want to clear the download queue?", 
-                                    "Confirm Clear", wx.YES_NO | wx.ICON_QUESTION)
-            if dialog.ShowModal() == wx.ID_YES:
-                self.videos.clear()
-                self.list_view.DeleteAllItems()
-                # Reset the image list except for icons
-                if hasattr(self, 'image_list'):
-                    self.image_list.RemoveAll()
-                    # Re-add default images
-                    default_bitmap = wx.Bitmap(90, 50)
-                    self.default_thumbnail_idx = self.image_list.Add(default_bitmap)
-                    self.delete_icon_idx = self.image_list.Add(self.delete_icon)
-                self.SetStatusText("Download queue cleared")
-            dialog.Destroy()
+            # Clear the videos list first
+            self.videos.clear()
+            # Clear the list view items
+            self.list_view.DeleteAllItems()
+            # Reset the image list except for icons
+            if hasattr(self, 'image_list'):
+                # Create a new image list
+                new_image_list = wx.ImageList(90, 50)
+                # Add default images
+                default_bitmap = wx.Bitmap(90, 50)
+                self.default_thumbnail_idx = new_image_list.Add(default_bitmap)
+                
+                # Add delete icon if available, otherwise create a default one
+                if hasattr(self, 'delete_icon'):
+                    self.delete_icon_idx = new_image_list.Add(self.delete_icon)
+                else:
+                    default_delete = wx.Bitmap(90, 50)
+                    self.delete_icon = default_delete
+                    self.delete_icon_idx = new_image_list.Add(default_delete)
+                
+                # Set the new image list
+                self.list_view.SetImageList(new_image_list, wx.IMAGE_LIST_SMALL)
+                self.image_list = new_image_list
+            self.SetStatusText("Download queue cleared")
 
     def on_list_click(self, event):
-        """Handle clicks on the list items, particularly for action icons"""
+        """Handle clicks on the list items"""
+        event.Skip()  # Allow default processing
         # Get mouse position
         point = event.GetPosition()
         item, flags = self.list_view.HitTest(point)
@@ -332,26 +340,7 @@ class VideoDownloaderFrame(wx.Frame):
         
         event.Skip()  # Allow default processing
 
-    def on_right_click(self, event):
-        """Handle right-click for context menu"""
-        point = event.GetPosition()
-        item, flags = self.list_view.HitTest(point)
-        
-        if item != -1:  # If an item was right-clicked
-            # Create popup menu
-            menu = wx.Menu()
-            
-            # Add menu items
-            remove_item = menu.Append(-1, "Remove from Queue")
-            
-            # Bind events
-            self.Bind(wx.EVT_MENU, lambda evt: self._remove_selected_item(item), remove_item)
-            
-            # Show popup menu
-            self.PopupMenu(menu, event.GetPosition())
-            menu.Destroy()
-        
-        event.Skip()
+
 
     def on_update_ytdlp(self, event):
         """Download or update yt-dlp executable"""
@@ -394,7 +383,9 @@ class VideoDownloaderFrame(wx.Frame):
         self.downloading = True
         self.download_button.Disable()
         self.clear_button.Disable()
+        self.cancel_button.Enable()  # Enable cancel button when downloading
         self.download_threads = []
+        self.cancel_requested = False  # Flag to track if cancel was requested
         
         for index, video_info in enumerate(self.videos):
             thread = threading.Thread(target=self._download_video, args=(index, video_info.url), daemon=True)
@@ -406,14 +397,54 @@ class VideoDownloaderFrame(wx.Frame):
 
     def on_download_progress(self, event):
         """Handle download progress event"""
-        self.list_view.SetItem(event.index, 3, f"Downloading {event.progress}")
+        # Create or update progress gauge
+        if not hasattr(self.list_view, f'gauge_{event.index}'):
+            # Calculate position for the gauge
+            item_rect = self.list_view.GetItemRect(event.index)
+            
+            # Calculate the x position by getting the sum of column widths before the Status column
+            x_pos = 0
+            for col in range(3):  # Sum widths of columns 0, 1, and 2
+                x_pos += self.list_view.GetColumnWidth(col)
+            
+            # Create and position the gauge - make it narrower to leave room for text
+            gauge = wx.Gauge(self.list_view, -1, 100, size=(80, 15))
+            # Position gauge higher in the cell to leave room for text below
+            gauge.SetPosition((x_pos + 2, item_rect.y + 1))
+            setattr(self.list_view, f'gauge_{event.index}', gauge)
+        
+        # Update progress
+        gauge = getattr(self.list_view, f'gauge_{event.index}')
+        try:
+            # Extract numeric value from progress string
+            progress_str = event.progress.strip()
+            if progress_str.endswith('%'):
+                progress_str = progress_str[:-1]  # Remove % symbol
+            progress_value = float(progress_str)  # Convert to float first
+            gauge.SetValue(int(progress_value))  # Convert to int for gauge
+            # Set the percentage text to appear below the gauge with proper spacing
+            self.list_view.SetItem(event.index, 3, f"\n   {event.progress}")
+        except (ValueError, AttributeError):
+            # Handle any parsing errors gracefully
+            pass
+        self.list_view.SetItem(event.index, 3, event.progress)
     
     def on_download_complete(self, event):
         """Handle download complete event"""
         if event.success:
+            # Remove gauge when download is complete
+            if hasattr(self.list_view, f'gauge_{event.index}'):
+                gauge = getattr(self.list_view, f'gauge_{event.index}')
+                gauge.Destroy()
+                delattr(self.list_view, f'gauge_{event.index}')
             self.list_view.SetItem(event.index, 3, "Downloaded")
             self._set_row_color(event.index, wx.Colour(200, 255, 200))  # Light green
         else:
+            # Remove gauge on failure
+            if hasattr(self.list_view, f'gauge_{event.index}'):
+                gauge = getattr(self.list_view, f'gauge_{event.index}')
+                gauge.Destroy()
+                delattr(self.list_view, f'gauge_{event.index}')
             self.list_view.SetItem(event.index, 3, "Failed")
             self._set_row_color(event.index, wx.Colour(255, 200, 200))  # Light red
             
@@ -431,6 +462,20 @@ class VideoDownloaderFrame(wx.Frame):
             self.list_view.SetItem(index, 1, "Error: Metadata fetch failed")
             self.list_view.SetItem(index, 3, "Error")
             self._set_row_color(index, wx.Colour(255, 200, 200))  # Light red
+            
+    def _update_thumbnail(self, index: int, thumbnail_path: str):
+        """Update the thumbnail for a list item"""
+        try:
+            # Load and resize the thumbnail image
+            img = wx.Image(thumbnail_path)
+            if img.IsOk():
+                # Add the thumbnail to the image list
+                bitmap = img.Scale(90, 50, wx.IMAGE_QUALITY_HIGH).ConvertToBitmap()
+                img_idx = self.image_list.Add(bitmap)
+                # Update the list item's image
+                self.list_view.SetItemImage(index, img_idx)
+        except Exception as e:
+            logger.error(f"Error updating thumbnail: {e}")
             
     def on_close(self, event):
         """Handle closing the application safely"""
@@ -459,118 +504,59 @@ class VideoDownloaderFrame(wx.Frame):
         """Check if URL is already in the queue"""
         return any(video.url == url for video in self.videos)
 
-    def _add_video_to_list(self, video_info: VideoInfo):
+    def _add_video_to_list(self, video_info):
         """Add a video to the list view and start metadata fetching"""
         self.videos.append(video_info)
         index = self.list_view.InsertItem(self.list_view.GetItemCount(), "", self.default_thumbnail_idx)
         self.list_view.SetItem(index, 1, "Fetching metadata...")
-        
-        # Only set the delete icon if we have a valid index and the image_list was created successfully
-        if index != -1 and hasattr(self, 'image_list') and hasattr(self, 'delete_icon_idx'):
-            self.list_view.SetItem(index, 4, "", imageId=self.delete_icon_idx)
-        
-        threading.Thread(target=self._fetch_metadata, args=(index, video_info.url), daemon=True).start()
+    
+        thread = threading.Thread(target=self._fetch_metadata, args=(index, video_info.url), daemon=True)
+        thread.start()
+        self.metadata_threads.append(thread)
 
-    def _process_playlist(self, playlist_url: str):
-        """Process a playlist URL and add all videos"""
-        wx.CallAfter(self.SetStatusText, "Fetching playlist videos...")
-        
-        videos, error = fetch_playlist_videos(playlist_url)
-        
-        if error:
-            logger.error(f"Failed to process playlist: {error}")
-            wx.CallAfter(wx.MessageBox, f"Failed to process playlist. Error: {error}", "Error", wx.ICON_ERROR)
+    def on_cancel_downloads(self, event):
+        """Cancel all active downloads"""
+        if not self.downloading:
             return
             
-        if videos:
-            wx.CallAfter(self.SetStatusText, f"Found {len(videos)} videos in playlist")
+        self.cancel_requested = True
+        self.SetStatusText("Cancelling downloads...")
+        
+        # Terminate all active processes
+        for video in self.videos:
+            if hasattr(video, 'process') and video.process:
+                try:
+                    video.process.terminate()
+                except:
+                    pass
+                    
+        # Wait for all download threads to complete
+        for thread in self.download_threads:
+            thread.join()
+
+        # Wait for metadata threads to complete
+        for thread in self.metadata_threads:
+            thread.join(timeout=1.0)  # Wait with timeout to prevent hanging
+        self.metadata_threads.clear()
             
-            # Add each video to the queue
-            for video in videos:
-                video_url = f"https://www.youtube.com/watch?v={video.get('id')}"
-                if not self._is_url_in_queue(video_url):
-                    video_info = VideoInfo(url=video_url)
-                    wx.CallAfter(self._add_video_to_list, video_info)
-        else:
-            wx.CallAfter(self.SetStatusText, "No videos found in playlist")
-            wx.CallAfter(wx.MessageBox, "No videos found in playlist", "Information", wx.ICON_INFORMATION)
-
-    def _remove_selected_item(self, index):
-        """Remove item at the specified index"""
-        if index != -1:
-            # Remove from video_list
-            self.videos.pop(index)
-            # Remove from list_view
-            self.list_view.DeleteItem(index)
-            self.SetStatusText(f"Removed item at position {index+1}")
-
-
-    def _update_thumbnail(self, index: int, thumbnail_path: str):
-        """Update the thumbnail image in the list view"""
-        try:
-            # Load the thumbnail image
-            img = wx.Image(thumbnail_path, wx.BITMAP_TYPE_ANY)
-            # Convert to bitmap and add to image list
-            bitmap = img.ConvertToBitmap()
-            img_idx = self.image_list.Add(bitmap)
-            # Update the list item with the new image
-            self.list_view.SetItemImage(index, img_idx)
-            
-            # Make sure delete icon is preserved - only if we have a valid index and delete_icon_idx exists
-            if index != -1 and hasattr(self, 'delete_icon_idx'):
-                self.list_view.SetItem(index, 4, "", imageId=self.delete_icon_idx)
-        except Exception as e:
-            logger.error(f"Error updating thumbnail: {e}")
-
-    def _set_row_color(self, index: int, color: wx.Colour):
-        """Set the background color for a row in the list view"""
-        for col in range(self.list_view.GetColumnCount()):
-            self.list_view.SetItemBackgroundColour(index, color)
-
-    def check_ytdlp(self):
-        """Check if yt-dlp exists and check for updates"""
-        # Start a thread to check version to avoid freezing the UI
-        threading.Thread(target=self._check_ytdlp_version, daemon=True).start()
-
-    def _check_ytdlp_version(self):
-        """Check if an update is available for yt-dlp"""
-        if not check_ytdlp_exists():
-            logger.warning("yt-dlp not found")
-            wx.CallAfter(self.update_button.Enable)
-            wx.CallAfter(self.SetStatusText, "yt-dlp not found. Click 'Update yt-dlp' to download it.")
-            return
-            
-        current_version = get_ytdlp_version()
-        if not current_version:
-            logger.warning("Could not determine yt-dlp version")
-            wx.CallAfter(self.update_button.Enable)
-            wx.CallAfter(self.SetStatusText, "Cannot determine yt-dlp version. Update recommended.")
-            return
-            
-        latest_version = get_latest_ytdlp_version()
-        if not latest_version:
-            logger.warning("Could not check for yt-dlp updates")
-            wx.CallAfter(self.update_button.Enable)
-            wx.CallAfter(self.SetStatusText, "Could not check for updates. Update button enabled as precaution.")
-            return
-            
-        if latest_version.strip() != current_version.strip():
-            logger.info(f"yt-dlp update available: {current_version} → {latest_version}")
-            wx.CallAfter(self.update_button.Enable)
-            wx.CallAfter(self.SetStatusText, f"yt-dlp update available: {current_version} → {latest_version}")
-        else:
-            logger.info(f"yt-dlp is up to date (version {current_version})")
-            wx.CallAfter(self.update_button.Disable)
-            wx.CallAfter(self.SetStatusText, f"yt-dlp is up to date (version {current_version})")
+        self.downloading = False
+        self.download_button.Enable()
+        self.clear_button.Enable()
+        self.cancel_button.Disable()
+        self.cancel_requested = False  # Reset cancel flag
+        self.SetStatusText("Downloads cancelled")
 
     def _fetch_metadata(self, index: int, link: str):
         """Fetch video metadata using yt-dlp"""
         try:
+            if self.cancel_requested:
+                return
+
             wx.CallAfter(self.SetStatusText, f"Fetching metadata for video {index+1}...")
             info_dict, error = fetch_video_metadata(link)
             
-            if error:
-                logger.error(f"Failed to get metadata: {error}")
+            if error or self.cancel_requested:
+                logger.error(f"Failed to get metadata: {error if error else 'Cancelled'}")
                 event = MetadataFetchedEvent(index=index, success=False)
                 wx.PostEvent(self, event)
                 return
@@ -638,7 +624,7 @@ class VideoDownloaderFrame(wx.Frame):
             extension = ".mp3" if self.audio_only.GetValue() else ".mp4"
             output_path = os.path.join(self.save_path, f"{video_title}{extension}")
             
-                # Check if file already exists
+            # Check if file already exists
             if os.path.exists(output_path):
                 wx.CallAfter(self.list_view.SetItem, index, 3, "Already Downloaded")
                 wx.CallAfter(self._set_row_color, index, wx.Colour(200, 255, 200))  # Light green
@@ -665,19 +651,29 @@ class VideoDownloaderFrame(wx.Frame):
                 errors='replace'
             )
             
+            # Store process reference for cancellation
+            self.videos[index].process = process
+            
             # Monitor stdout for progress updates
             for line in iter(process.stdout.readline, ''):
                 if not line:
                     break
+                
+                # Check if cancellation was requested
+                if self.cancel_requested:
+                    process.terminate()
+                    wx.PostEvent(self, DownloadCompleteEvent(index=index, success=False))
+                    wx.CallAfter(self.list_view.SetItem, index, 3, "Cancelled")
+                    return
                     
                 line = line.strip()
-                if re.match(r'^\d{1,3}\.\d%', line):
-                    wx.PostEvent(self, DownloadProgressEvent(index=index, progress=line))
-                elif "download" in line.lower() and "%" in line:
-                    # Try to extract percentage from other progress formats
-                    match = re.search(r'(\d{1,3}\.\d)%', line)
+                # Look for percentage in the output
+                if '%' in line:
+                    # Try to extract percentage value
+                    match = re.search(r'([0-9.]+)%', line)
                     if match:
-                        wx.PostEvent(self, DownloadProgressEvent(index=index, progress=f"{match.group(1)}%"))
+                        progress = match.group(1) + '%'
+                        wx.PostEvent(self, DownloadProgressEvent(index=index, progress=progress))
             
             # Wait for process to complete
             process.stdout.close()
@@ -699,18 +695,76 @@ class VideoDownloaderFrame(wx.Frame):
             wx.PostEvent(self, DownloadCompleteEvent(index=index, success=False))
             wx.CallAfter(self.SetStatusText, f"Error: {str(e)}")
 
+    def on_cancel_downloads(self, event):
+        """Cancel all active downloads"""
+        if not self.downloading:
+            return
+            
+        self.cancel_requested = True
+        self.SetStatusText("Cancelling downloads...")
+        
+        # Terminate all active processes
+        for video in self.videos:
+            if hasattr(video, 'process') and video.process:
+                try:
+                    video.process.terminate()
+                except:
+                    pass
+                    
+        # Wait for all threads to complete
+        for thread in self.download_threads:
+            thread.join()
+            
+        self.downloading = False
+        self.download_button.Enable()
+        self.clear_button.Enable()
+        self.cancel_button.Disable()
+        self.SetStatusText("Downloads cancelled")
+        
     def _monitor_downloads(self):
         """Monitor download threads and re-enable buttons when all complete"""
         for thread in self.download_threads:
             thread.join()
             
         wx.CallAfter(self._on_downloads_complete)
-
+        
+    def _set_row_color(self, index: int, color: wx.Colour):
+        """Set the background color for a row in the list view"""
+        try:
+            item = self.list_view.GetItem(index)
+            item.SetBackgroundColour(color)
+            self.list_view.SetItem(item)
+        except Exception as e:
+            logger.error(f"Error setting row color: {e}")
+            
+    def check_ytdlp(self):
+        """Check if yt-dlp exists and is up to date"""
+        try:
+            if not check_ytdlp_exists():
+                self.SetStatusText("yt-dlp not found. Downloading...")
+                if update_ytdlp():
+                    self.SetStatusText("yt-dlp downloaded successfully")
+                else:
+                    self.SetStatusText("Failed to download yt-dlp")
+                    return
+            
+            current_version = get_ytdlp_version()
+            if current_version:
+                self.SetStatusText(f"yt-dlp is up to date (version {current_version})")
+                logger.info(f"yt-dlp is up to date (version {current_version})")
+            else:
+                self.SetStatusText("Failed to get yt-dlp version")
+                
+        except Exception as e:
+            logger.error(f"Error checking yt-dlp: {e}")
+            self.SetStatusText(f"Error checking yt-dlp: {e}")
     def _on_downloads_complete(self):
         """Handle completion of all downloads"""
         self.downloading = False
         self.download_button.Enable()
         self.clear_button.Enable()
+        self.cancel_button.Disable()  # Disable cancel button when done
+        self.cancel_requested = False  # Reset cancel flag
         self.SetStatusText("All downloads complete")
         
         # Count successful and failed downloads
@@ -727,4 +781,5 @@ class VideoDownloaderFrame(wx.Frame):
         if failed_count > 0:
             message += f", {failed_count} failed"
         
+        self.SetStatusText(message)
         wx.MessageBox(message, "Downloads Complete", wx.ICON_INFORMATION)

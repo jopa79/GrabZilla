@@ -17,14 +17,16 @@ logger = logging.getLogger('VideoDownloader.Video')
 class VideoInfo:
     """Class to store video information"""
     def __init__(self, url: str, title: str = "", duration: int = 0, 
-                 thumbnail_url: str = "", thumbnail_path: str = "", 
-                 status: str = "Pending"):
+        thumbnail_url: str = "", thumbnail_path: str = "", 
+        status: str = "Pending"):
+        self.process = None  # Store subprocess reference for cancellation
         self.url = url
         self.title = title
         self.duration = duration
         self.thumbnail_url = thumbnail_url
         self.thumbnail_path = thumbnail_path
         self.status = status
+        self.process = None  # Store subprocess reference for cancellation
 
 def is_valid_link(link: str) -> bool:
     """Check if a URL is valid"""

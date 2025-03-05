@@ -41,4 +41,3 @@ URL_PATTERNS = {
 
 # Quality options
 QUALITY_CHOICES = ["Best", "1080p", "720p", "480p", "360p"]
-PLAYLIST_CHOICES = ["Download All", "First Video Only"]

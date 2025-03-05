@@ -102,11 +102,12 @@ def fetch_playlist_videos(playlist_url: str) -> Tuple[List[Dict[str, Any]], Opti
         return [], str(e)
 
 def build_download_command(video_link: str, output_path: str, 
-                          audio_only: bool = False, quality: str = "Best") -> str:
+    audio_only: bool = False, quality: str = "Best") -> str:
     """Build the yt-dlp command based on selected options"""
     if audio_only:
         return (f'"{YTDLP_EXE}" -x --audio-format mp3 --audio-quality 0 '
                 f'--progress-template "%(progress._percent_str)s" '
+                f'--rm-cache-dir --keep-video false --remux-video mp3 --postprocessor-args "-y" '
                 f'--output "{output_path}" {video_link}')
     else:
         # Set format based on quality

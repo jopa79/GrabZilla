@@ -19,3 +19,126 @@ WARNING: [youtube:tab] Incomplete data received. Retrying (3/3)...
 WARNING: [youtube:tab] Incomplete data received. Giving up after 3 retries
 Der Befehl "si" ist entweder falsch geschrieben oder
 konnte nicht gefunden werden.
+2025-03-05 11:24:01,938 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:24:06,455 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:25:12,907 - VideoDownloader.UI - ERROR - Download failed: WARNING: [vimeo] 856397420: Failed to parse XML: not well-formed (invalid token): line 1, column 0
+WARNING: [vimeo] 856397420: Failed to parse XML: not well-formed (invalid token): line 1, column 0
+ERROR: [vimeo] 856397420: Requested format is not available. Use --list-formats for a list of available formats
+
+2025-03-05 11:26:51,376 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:26:53,269 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:30:50,575 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:30:52,494 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:31:35,109 - VideoDownloader.UI - ERROR - Download failed: WARNING: [vimeo] 794086213: Failed to parse XML: not well-formed (invalid token): line 1, column 0
+WARNING: [vimeo] 794086213: Failed to parse XML: not well-formed (invalid token): line 1, column 0
+ERROR: [vimeo] 794086213: Requested format is not available. Use --list-formats for a list of available formats
+
+2025-03-05 11:32:02,779 - VideoDownloader.UI - ERROR - Download failed: The system cannot find the file specified.
+
+2025-03-05 11:32:29,230 - VideoDownloader.UI - ERROR - Download failed: The system cannot find the file specified.
+
+2025-03-05 11:32:34,649 - VideoDownloader.UI - ERROR - Download failed: The system cannot find the file specified.
+
+2025-03-05 11:33:17,837 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:33:19,779 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:34:06,240 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:34:08,158 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:37:43,358 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:37:45,354 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:40:18,901 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:40:20,972 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:43:15,735 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:43:17,690 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:45:33,113 - VideoDownloader.UI - ERROR - Error fetching metadata: list index out of range
+2025-03-05 11:46:13,276 - VideoDownloader.UI - ERROR - Error fetching metadata: list index out of range
+2025-03-05 11:46:46,101 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:46:48,032 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:46:54,339 - VideoDownloader.UI - ERROR - Error fetching metadata: list index out of range
+2025-03-05 11:49:41,971 - VideoDownloader.UI - INFO - Loading delete icon from r:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:49:44,153 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:52:57,758 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:57:30,026 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 11:57:32,038 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 11:57:50,079 - VideoDownloader.UI - ERROR - Error fetching metadata: list index out of range
+2025-03-05 12:00:56,305 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:00:58,571 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:02:30,466 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:02:32,640 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:04:12,573 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:04:14,830 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:11:28,278 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:11:30,566 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:13:46,736 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:13:48,950 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:14:44,312 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:14:46,219 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:15:26,417 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:15:28,566 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:23:41,380 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:23:43,614 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:25:06,816 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:25:08,881 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:25:41,152 - VideoDownloader.UI - ERROR - Error downloading video: wrapped C/C++ object of type VideoDownloaderFrame has been deleted
+2025-03-05 12:27:44,481 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:27:46,631 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:28:18,872 - VideoDownloader.UI - INFO - Loading delete icon from R:\GITHUB\GrabZilla\resources\icons\delete.png
+2025-03-05 12:28:21,000 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:28:52,363 - VideoDownloader.UI - ERROR - Error downloading video: wrapped C/C++ object of type VideoDownloaderFrame has been deleted
+2025-03-05 12:35:00,741 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:35:12,336 - VideoDownloader.UI - ERROR - Failed to process playlist: 'list' is not recognized as an internal or external command,
+operable program or batch file.
+'index' is not recognized as an internal or external command,
+operable program or batch file.
+2025-03-05 12:35:24,231 - VideoDownloader.UI - ERROR - Failed to process playlist: 'list' is not recognized as an internal or external command,
+operable program or batch file.
+'index' is not recognized as an internal or external command,
+operable program or batch file.
+2025-03-05 12:35:35,656 - VideoDownloader.UI - ERROR - Failed to get metadata: ERROR: [youtube:truncated_id] Mwmy4qxGmp: Incomplete YouTube ID Mwmy4qxGmp. URL https://www.youtube.com/watch?v=Mwmy4qxGmp looks truncated.
+2025-03-05 12:35:53,758 - VideoDownloader.UI - ERROR - Failed to get title: ERROR: [youtube:truncated_id] Mwmy4qxGmp: Incomplete YouTube ID Mwmy4qxGmp. URL https://www.youtube.com/watch?v=Mwmy4qxGmp looks truncated.
+2025-03-05 12:36:27,342 - VideoDownloader.UI - ERROR - Failed to get title: ERROR: [youtube:truncated_id] Mwmy4qxGmp: Incomplete YouTube ID Mwmy4qxGmp. URL https://www.youtube.com/watch?v=Mwmy4qxGmp looks truncated.
+2025-03-05 12:42:50,338 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:47:28,042 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 12:47:37,792 - VideoDownloader.UI - ERROR - Failed to get metadata: 't' is not recognized as an internal or external command,
+operable program or batch file.
+2025-03-05 12:48:09,019 - VideoDownloader.UI - ERROR - Failed to get title: 't' is not recognized as an internal or external command,
+operable program or batch file.
+2025-03-05 13:05:20,939 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 13:10:56,295 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 13:13:29,121 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 13:14:34,198 - VideoDownloader.UI - ERROR - Error updating thumbnail: C++ assertion "0 <= info.m_col && info.m_col < ctrl->GetColumnCount()" failed at ..\..\src\msw\listctrl.cpp(3643) in wxConvertToMSWListItem(): wxListCtrl column index out of bounds
+2025-03-05 13:14:43,207 - VideoDownloader.UI - ERROR - Error updating thumbnail: C++ assertion "0 <= info.m_col && info.m_col < ctrl->GetColumnCount()" failed at ..\..\src\msw\listctrl.cpp(3643) in wxConvertToMSWListItem(): wxListCtrl column index out of bounds
+2025-03-05 13:26:55,489 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 13:39:09,680 - VideoDownloader.App - ERROR - Failed to initialize application: 'VideoDownloaderFrame' object has no attribute 'check_ytdlp'
+2025-03-05 13:39:26,245 - VideoDownloader.App - ERROR - Failed to initialize application: 'VideoDownloaderFrame' object has no attribute 'check_ytdlp'
+2025-03-05 15:04:17,931 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 15:15:10,299 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 15:15:21,221 - VideoDownloader.UI - ERROR - Error downloading video: 'VideoDownloaderFrame' object has no attribute '_set_row_color'
+2025-03-05 15:16:03,654 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 15:18:43,333 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 15:20:42,842 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 15:26:25,560 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 15:36:29,589 - VideoDownloader.UI - INFO - yt-dlp is up to date (version 2025.02.19)
+2025-03-05 15:41:20,994 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\5. M\ufffdrz 2025 - Regierungspressekonferenz _ BPK.mp3
+
+2025-03-05 15:41:21,028 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\KI - Die letzte Erfindung der Menschheit_.mp3
+
+2025-03-05 15:41:21,136 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\SUPERREICHE - Warum Verm\ufffdgen in Deutschland ungleich verteilt ist.mp3
+
+2025-03-05 15:41:21,136 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\Investors Underestimate Trump's Tolerance for Stock Selloff_ Soros Chief Investment Officer.mp3
+
+2025-03-05 15:41:29,838 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\Investors Underestimate Trump's Tolerance for Stock Selloff_ Soros Chief Investment Officer.mp3
+
+2025-03-05 15:41:29,920 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\5. M\ufffdrz 2025 - Regierungspressekonferenz _ BPK.mp3
+
+2025-03-05 15:41:29,920 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\KI - Die letzte Erfindung der Menschheit_.mp3
+
+2025-03-05 15:41:29,950 - VideoDownloader.UI - ERROR - Download failed: WARNING: Post-Processor arguments given without specifying name. The arguments will be given to all post-processors
+ERROR: Fixed output name but more than one file to download: C:\Users\JoPa\Desktop\VideoDownloader\SUPERREICHE - Warum Verm\ufffdgen in Deutschland ungleich verteilt ist.mp3
+

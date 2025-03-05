@@ -32,7 +32,7 @@ class DownloadCompleteEvent(wx.PyCommandEvent):
 class MetadataFetchedEvent(wx.PyCommandEvent):
     """Event to notify that metadata has been fetched"""
     def __init__(self, index: int, success: bool = True, title: str = "", 
-                 duration: str = "", thumbnail_path: Optional[str] = None):
+        duration: str = "", thumbnail_path: Optional[str] = None):
         super(MetadataFetchedEvent, self).__init__(EVT_METADATA_FETCHED_ID)
         self.index = index
         self.success = success
