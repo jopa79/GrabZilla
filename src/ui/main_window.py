@@ -346,7 +346,7 @@ class VideoDownloaderFrame(wx.Frame):
         """Download or update yt-dlp executable"""
         try:
             self.SetStatusText("Updating yt-dlp...")
-            wx.MessageBox("Updating yt-dlp. Please wait...", "Update", wx.ICON_INFORMATION)
+            wx.MessageBox("Updating yt-dlp. Press OK and wait...", "Update", wx.ICON_INFORMATION)
             
             if update_ytdlp():
                 wx.MessageBox("yt-dlp has been updated successfully!", "Update", wx.ICON_INFORMATION)
@@ -749,15 +749,25 @@ class VideoDownloaderFrame(wx.Frame):
                     return
             
             current_version = get_ytdlp_version()
-            if current_version:
-                self.SetStatusText(f"yt-dlp is up to date (version {current_version})")
-                logger.info(f"yt-dlp is up to date (version {current_version})")
+            latest_version = get_latest_ytdlp_version()
+            
+            if current_version and latest_version:
+                if current_version == latest_version:
+                    self.SetStatusText(f"yt-dlp is up to date (version {current_version})")
+                    self.update_button.Disable()
+                    logger.info(f"yt-dlp is up to date (version {current_version})")
+                else:
+                    self.SetStatusText(f"yt-dlp update available: {current_version} → {latest_version}")
+                    self.update_button.Enable()
+                    logger.info(f"yt-dlp update available: {current_version} → {latest_version}")
             else:
                 self.SetStatusText("Failed to get yt-dlp version")
+                self.update_button.Enable()  # Enable button to allow retry
                 
         except Exception as e:
             logger.error(f"Error checking yt-dlp: {e}")
             self.SetStatusText(f"Error checking yt-dlp: {e}")
+            self.update_button.Enable()  # Enable button to allow retry
     def _on_downloads_complete(self):
         """Handle completion of all downloads"""
         self.downloading = False

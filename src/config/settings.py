@@ -3,10 +3,25 @@ Application settings and constants
 """
 
 import os
+import sys
 
-# Base paths
-APP_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RESOURCES_DIR = os.path.join(APP_ROOT, "resources")
+# Determine if we're running from a PyInstaller bundle
+def is_bundled():
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
+# Base paths - handle both bundled and development environments
+if is_bundled():
+    # When running as a bundled application
+    APP_ROOT = os.path.dirname(sys.executable)
+    # For bundled app, use _MEIPASS for temporary files
+    BASE_DIR = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+else:
+    # When running in development
+    APP_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    BASE_DIR = APP_ROOT
+
+# Resources directory
+RESOURCES_DIR = os.path.join(BASE_DIR, "resources")
 
 # Binary files
 BIN_DIR = os.path.join(RESOURCES_DIR, "bin")
@@ -17,9 +32,8 @@ YTDLP_URL = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.ex
 ICONS_DIR = os.path.join(RESOURCES_DIR, "icons")
 BANNER_IMG = os.path.join(ICONS_DIR, "banner.png")
 ICON_IMG = os.path.join(ICONS_DIR, "app_icon.ico")
-DELETE_ICON = os.path.join(ICONS_DIR, "delete.png")
 
-# Temporary directory for thumbnails
+# Temporary directory for thumbnails - use a portable location
 THUMBNAIL_DIR = os.path.join(APP_ROOT, "tmp")
 
 # Ensure directories exist
