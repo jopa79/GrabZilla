@@ -11,7 +11,7 @@ a = Analysis(
     datas=[
         ('resources/icons/*', 'resources/icons'),
     ],
-    hiddenimports=['wx'],
+    hiddenimports=['wx', 'wx.adv', 'wx.html', 'wx.lib', 'wx.lib.agw', 'wx.lib.agw.aui', 'wx.lib.pubsub', 'wx.py'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

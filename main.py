@@ -9,14 +9,25 @@ import wx
 import os
 import logging
 from src.app import VideoDownloaderApp
+from src.config.settings import APP_ROOT, DISABLE_LOGGING
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filename='video_downloader.log'
-)
 logger = logging.getLogger('VideoDownloader')
+logger.setLevel(logging.INFO)
+
+# Create console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logger.addHandler(console_handler)
+
+# Add file handler only if logging is not disabled
+if not DISABLE_LOGGING:
+    log_file = os.path.join(APP_ROOT, 'video_downloader.log')
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(file_handler)
 
 def main():
     """Main application entry point"""

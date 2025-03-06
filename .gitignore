@@ -5,3 +5,18 @@ venv/
 env/
 **/__pycache__/
 video_downloader.log
+
+# PyInstaller build files
+build/
+dist/
+*.spec
+
+# Temporary files
+tmp/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# User-specific files
+*.log

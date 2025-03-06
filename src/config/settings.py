@@ -44,6 +44,9 @@ os.makedirs(BIN_DIR, exist_ok=True)
 DEFAULT_QUALITY = "Best"
 DEFAULT_PLAYLIST_OPTION = "Download All"
 
+# Logging configuration
+DISABLE_LOGGING = True  # Set to True to disable log file generation
+
 # URL patterns for supported platforms
 URL_PATTERNS = {
     'youtube': r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})',

@@ -12,7 +12,7 @@ import re
 from typing import List, Dict, Optional
 
 from src.config.settings import (
-    BANNER_IMG, ICON_IMG, DELETE_ICON, THUMBNAIL_DIR,
+    BANNER_IMG, ICON_IMG, THUMBNAIL_DIR,
     QUALITY_CHOICES
 )
 from src.core.video import VideoInfo, is_valid_link, extract_video_id, download_thumbnail, format_duration
@@ -157,19 +157,6 @@ class VideoDownloaderFrame(wx.Frame):
             default_bitmap = wx.Bitmap(90, 50)
             self.default_thumbnail_idx = self.image_list.Add(default_bitmap)
             
-            # Load and add delete icon
-            try:
-                if os.path.exists(DELETE_ICON):
-                    logger.info(f"Loading delete icon from {DELETE_ICON}")
-                    delete_icon = wx.Bitmap(DELETE_ICON)
-                    self.delete_icon = delete_icon
-                    self.delete_icon_idx = self.image_list.Add(delete_icon)
-            except Exception as e:
-                logger.error(f"Error loading delete icon: {e}")
-                # Create a default delete icon if loading fails
-                default_delete = wx.Bitmap(90, 50)
-                self.delete_icon = default_delete
-                self.delete_icon_idx = self.image_list.Add(default_delete)
         except Exception as e:
             logger.error(f"Error initializing image list: {e}")
             # Try to continue without images
@@ -306,14 +293,6 @@ class VideoDownloaderFrame(wx.Frame):
                 default_bitmap = wx.Bitmap(90, 50)
                 self.default_thumbnail_idx = new_image_list.Add(default_bitmap)
                 
-                # Add delete icon if available, otherwise create a default one
-                if hasattr(self, 'delete_icon'):
-                    self.delete_icon_idx = new_image_list.Add(self.delete_icon)
-                else:
-                    default_delete = wx.Bitmap(90, 50)
-                    self.delete_icon = default_delete
-                    self.delete_icon_idx = new_image_list.Add(default_delete)
-                
                 # Set the new image list
                 self.list_view.SetImageList(new_image_list, wx.IMAGE_LIST_SMALL)
                 self.image_list = new_image_list
@@ -332,11 +311,6 @@ class VideoDownloaderFrame(wx.Frame):
             total_width = sum(col_widths[:4])  # Width up to Status column
             
             x_pos = point.x
-            
-            # Check if delete column was clicked
-            if total_width <= x_pos < total_width + col_widths[4]:
-                # Delete icon clicked
-                self._remove_selected_item(item)
         
         event.Skip()  # Allow default processing
 
