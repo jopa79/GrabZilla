@@ -18,8 +18,7 @@ from src.config.settings import (
 from src.core.video import VideoInfo, is_valid_link, extract_video_id, download_thumbnail, format_duration
 from src.core.downloader import (
     check_ytdlp_exists, get_ytdlp_version, get_latest_ytdlp_version, 
-    update_ytdlp, fetch_video_metadata, fetch_playlist_videos,
-    build_download_command
+    update_ytdlp, fetch_video_metadata, build_download_command
 )
 from src.ui.events import (
     EVT_DOWNLOAD_PROGRESS, DownloadProgressEvent,
@@ -143,7 +142,7 @@ class VideoDownloaderFrame(wx.Frame):
         options_sizer.Add(quality_label, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
         
         self.quality_dropdown = wx.Choice(options_box, choices=QUALITY_CHOICES)
-        self.quality_dropdown.SetSelection(0)  # Default to Best
+        self.quality_dropdown.SetSelection(3)  # Default to 1080
         options_sizer.Add(self.quality_dropdown, 0, wx.ALL, 5)
         
 

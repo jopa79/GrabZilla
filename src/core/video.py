@@ -33,10 +33,6 @@ def is_valid_link(link: str) -> bool:
     # Improved URL validation to support more platforms
     return re.match(r'^https?://(www\.)?(youtube|youtu\.be|vimeo|dailymotion|facebook|twitter|instagram).*', link) is not None
 
-def is_playlist(url: str) -> bool:
-    """Check if URL is a playlist"""
-    return "playlist" in url or "list=" in url
-
 def extract_video_id(link: str) -> str:
     """Extract video ID from URL"""
     for platform, pattern in URL_PATTERNS.items():

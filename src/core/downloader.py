@@ -78,29 +78,6 @@ def fetch_video_metadata(video_url: str) -> Tuple[Optional[Dict[str, Any]], Opti
         logger.error(f"Error fetching metadata: {e}")
         return None, str(e)
 
-def fetch_playlist_videos(playlist_url: str) -> Tuple[List[Dict[str, Any]], Optional[str]]:
-    """Fetch list of videos in a playlist"""
-    try:
-        command = f'"{YTDLP_EXE}" --flat-playlist --dump-json {playlist_url}'
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        
-        if result.returncode == 0:
-            videos = []
-            for line in result.stdout.strip().split('\n'):
-                if line.strip():
-                    try:
-                        video_info = json.loads(line)
-                        videos.append(video_info)
-                    except json.JSONDecodeError:
-                        continue
-            return videos, None
-        else:
-            error_msg = result.stderr.strip() if result.stderr else "Unknown error"
-            return [], error_msg
-    except Exception as e:
-        logger.error(f"Error fetching playlist: {e}")
-        return [], str(e)
-
 def build_download_command(video_link: str, output_path: str, 
     audio_only: bool = False, quality: str = "Best") -> str:
     """Build the yt-dlp command based on selected options"""
@@ -112,18 +89,34 @@ def build_download_command(video_link: str, output_path: str,
     else:
         # Set format based on quality
         if quality == "Best":
-            format_spec = "bestvideo+bestaudio[ext=m4a]/best"
+            return (f'"{YTDLP_EXE}" -f "bv*+ba/b" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
+        elif quality == "2160p":
+            return (f'"{YTDLP_EXE}" -f "bv*+ba/b" -S "res:2160" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
+        elif quality == "1440p":
+            return (f'"{YTDLP_EXE}" -f "bv*+ba/b" -S "res:1440" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
         elif quality == "1080p":
-            format_spec = "bestvideo[height<=1080]+bestaudio[ext=m4a]/best[height<=1080]"
+            return (f'"{YTDLP_EXE}" -f "bv*+ba/b" -S "res:1080" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
         elif quality == "720p":
-            format_spec = "bestvideo[height<=720]+bestaudio[ext=m4a]/best[height<=720]"
+            return (f'"{YTDLP_EXE}" -f "bv*+ba/b" -S "res:720" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
         elif quality == "480p":
-            format_spec = "bestvideo[height<=480]+bestaudio[ext=m4a]/best[height<=480]"
+            return (f'"{YTDLP_EXE}" -f "bv*+ba/b" -S "res:480" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
         elif quality == "360p":
-            format_spec = "bestvideo[height<=360]+bestaudio[ext=m4a]/best[height<=360]"
+            return (f'"{YTDLP_EXE}" -f "bv*+ba/b" -S "res:360" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
         else:
-            format_spec = "bestvideo+bestaudio[ext=m4a]/best"
-        
-        return (f'"{YTDLP_EXE}" -f {format_spec} --merge-output-format mp4 '
-                f'--progress-template "%(progress._percent_str)s" '
-                f'--output "{output_path}" {video_link}')
+            return (f'"{YTDLP_EXE}" -f "bestvideo+bestaudio[ext=m4a]/best" --merge-output-format mp4 '
+                    f'--progress-template "%(progress._percent_str)s" '
+                    f'--output "{output_path}" {video_link}')
