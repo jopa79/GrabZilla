@@ -42,7 +42,7 @@ class VideoDownloaderFrame(wx.Frame):
         # Set default folder to Desktop on Windows
         self.default_folder = os.path.join(os.environ['USERPROFILE'], 'Desktop')
                 
-        self.save_path = os.path.join(self.default_folder, 'VideoDownloader')
+        self.save_path = os.path.join(self.default_folder, 'GrabZilla_Videos')
         os.makedirs(self.save_path, exist_ok=True)
 
         # Create status bar
@@ -712,13 +712,23 @@ class VideoDownloaderFrame(wx.Frame):
             
     def check_ytdlp(self):
         """Check if yt-dlp exists and is up to date"""
+        # Disable update button initially
+        self.update_button.Disable()
+        
+        # Start version check in a separate thread
+        thread = threading.Thread(target=self._check_ytdlp_async, daemon=True)
+        thread.start()
+    
+    def _check_ytdlp_async(self):
+        """Asynchronous check for yt-dlp updates"""
         try:
             if not check_ytdlp_exists():
-                self.SetStatusText("yt-dlp not found. Downloading...")
+                wx.CallAfter(self.SetStatusText, "yt-dlp not found. Downloading...")
                 if update_ytdlp():
-                    self.SetStatusText("yt-dlp downloaded successfully")
+                    wx.CallAfter(self.SetStatusText, "yt-dlp downloaded successfully")
                 else:
-                    self.SetStatusText("Failed to download yt-dlp")
+                    wx.CallAfter(self.SetStatusText, "Failed to download yt-dlp")
+                    wx.CallAfter(self.update_button.Enable)
                     return
             
             current_version = get_ytdlp_version()
@@ -726,21 +736,21 @@ class VideoDownloaderFrame(wx.Frame):
             
             if current_version and latest_version:
                 if current_version == latest_version:
-                    self.SetStatusText(f"yt-dlp is up to date (version {current_version})")
-                    self.update_button.Disable()
+                    wx.CallAfter(self.SetStatusText, f"yt-dlp is up to date (version {current_version})")
+                    wx.CallAfter(self.update_button.Disable)
                     logger.info(f"yt-dlp is up to date (version {current_version})")
                 else:
-                    self.SetStatusText(f"yt-dlp update available: {current_version} → {latest_version}")
-                    self.update_button.Enable()
+                    wx.CallAfter(self.SetStatusText, f"yt-dlp update available: {current_version} → {latest_version}")
+                    wx.CallAfter(self.update_button.Enable)
                     logger.info(f"yt-dlp update available: {current_version} → {latest_version}")
             else:
-                self.SetStatusText("Failed to get yt-dlp version")
-                self.update_button.Enable()  # Enable button to allow retry
+                wx.CallAfter(self.SetStatusText, "Failed to get yt-dlp version")
+                wx.CallAfter(self.update_button.Enable)  # Enable button to allow retry
                 
         except Exception as e:
             logger.error(f"Error checking yt-dlp: {e}")
-            self.SetStatusText(f"Error checking yt-dlp: {e}")
-            self.update_button.Enable()  # Enable button to allow retry
+            wx.CallAfter(self.SetStatusText, f"Error checking yt-dlp: {e}")
+            wx.CallAfter(self.update_button.Enable)  # Enable button to allow retry
     def _on_downloads_complete(self):
         """Handle completion of all downloads"""
         self.downloading = False
